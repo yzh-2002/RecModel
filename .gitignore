@@ -1,0 +1,10 @@
+# 测试数据
+*.csv
+# 模型参数
+*.pth
+
+# python缓存文件
+**/__pycache__/**
+
+# idea
+.idea/
