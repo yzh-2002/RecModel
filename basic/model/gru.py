@@ -2,13 +2,20 @@ import torch
 from torch.nn import functional as F
 
 
-class RNN(torch.nn.Module):
+class GRU(torch.nn.Module):
     def __init__(self, vocab_size, hidden_size):
-        super(RNN, self).__init__()
+        super(GRU, self).__init__()
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
-        # PyTorch中有官方实现的torch.nn.RNN
-        # 隐藏层参数
+        # 更新门权重
+        self.W_xr = torch.nn.Parameter(torch.randn(vocab_size, hidden_size) * 0.01)
+        self.W_hr = torch.nn.Parameter(torch.randn(hidden_size, hidden_size) * 0.01)
+        self.b_r = torch.nn.Parameter(torch.zeros(hidden_size))
+        # 重置门权重
+        self.W_xz = torch.nn.Parameter(torch.randn(vocab_size, hidden_size) * 0.01)
+        self.W_hz = torch.nn.Parameter(torch.randn(hidden_size, hidden_size) * 0.01)
+        self.b_z = torch.nn.Parameter(torch.zeros(hidden_size))
+        # 候选隐状态权重
         self.W_xh = torch.nn.Parameter(torch.randn(vocab_size, hidden_size) * 0.01)
         self.W_hh = torch.nn.Parameter(torch.randn(hidden_size, hidden_size) * 0.01)
         self.b_h = torch.nn.Parameter(torch.zeros(hidden_size))
@@ -27,7 +34,11 @@ class RNN(torch.nn.Module):
         outputs = []
         x = F.one_hot(x.T, self.vocab_size).type(torch.float32)
         for t in x:  # t为每个时间步的输入
-            state = torch.tanh(torch.mm(t, self.W_xh) + torch.mm(state, self.W_hh) + self.b_h)
+            r = torch.sigmoid(torch.mm(t, self.W_xr) + torch.mm(state, self.W_hr) + self.b_r)
+            z = torch.sigmoid(torch.mm(t, self.W_xz) + torch.mm(state, self.W_hz) + self.b_z)
+            # * 逐元素相乘，也即Hadamard积
+            candidate_state = torch.tanh(torch.mm(t, self.W_xh) + torch.mm(r * state, self.W_hh) + self.b_h)
+            state = z * state + (1 - z) * candidate_state
             output = torch.mm(state, self.W_ho) + self.b_o
             outputs.append(output)
         # 返回形状等同于输入张量x
