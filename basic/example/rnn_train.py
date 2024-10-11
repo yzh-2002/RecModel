@@ -4,6 +4,7 @@ from dataset import load_data_time_machine
 from basic.model.rnn import RNN
 from basic.model.gru import GRU
 from basic.model.deeprnn import DeepRNN
+from basic.model.bidirectionalrnn import BidirectionalRNN
 
 
 def predict_fn(prefix, num_preds, model, vocab, device):
@@ -69,6 +70,7 @@ if __name__ == "__main__":
     num_hiddens = 512
     # model = RNN(len(vocab), num_hiddens).to('cuda')
     # model = GRU(len(vocab), num_hiddens).to('cuda')
-    model = DeepRNN(len(vocab), num_hiddens, 2).to('cuda')
+    # model = DeepRNN(len(vocab), num_hiddens, 2).to('cuda')
+    model = BidirectionalRNN(len(vocab), num_hiddens).to('cuda')
     num_epochs, lr = 500, 1
     train(model, train_iter, vocab, lr, num_epochs, 'cuda', use_random_iter=True)
