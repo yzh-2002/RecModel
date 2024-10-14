@@ -1,5 +1,6 @@
 import torch
 from ..abstract import Encoder, Decoder
+from basic.model.attention.attention import AdditiveAttention
 
 
 class Seq2seqEncoder(Encoder):
@@ -49,3 +50,38 @@ class Seq2seqDecoder(Decoder):
         output, state = self.rnn(X_and_context, state)
         output = self.dense(output).permute(1, 0, 2)  # (batch_size, seq_len, vocab_size)
         return output, enc_state, state
+
+
+class Seq2seqAttentionDecoder(Decoder):
+    def __init__(self, vocab_size, embed_size, num_hiddens, num_layers,
+                 dropout=0, **kwargs):
+        super(Seq2seqAttentionDecoder, self).__init__(**kwargs)
+        # 虽然query和key维度相等，但由于加性注意力有参数，一般效果要好于缩放点积注意力
+        self.attention = AdditiveAttention(num_hiddens, num_hiddens, num_hiddens, dropout)
+        self.embedding = torch.nn.Embedding(vocab_size, embed_size)
+        self.rnn = torch.nn.GRU(embed_size + num_hiddens, num_hiddens, num_layers,
+                                dropout=dropout)
+        self.dense = torch.nn.Linear(num_hiddens, vocab_size)
+
+    def init_state(self, enc_outputs, enc_valid_lens, *args):
+        # enc_outputs: (output, state)
+        # 先前只需要state，但注意力机制需要各个时间步的输出，故output也需要传出
+        outputs, state = enc_outputs
+        # 转置之后，outputs shape: ( batch_size, seq_len, num_hiddens)
+        return outputs.permute(1, 0, 2), state, enc_valid_lens
+
+    def forward(self, X, enc_outputs, state, enc_valid_lens):
+        # forward函数的参数除X外，后续参数应该和init_state返回值保持一致
+        outputs = []  # 保存所有时间步的输出
+        X = self.embedding(X).permute(1, 0, 2)
+        # 因为每一步的`query`会发生变化，所以此处需要循环，不能直接扔进dnn
+        for x in X:  # x shape: (batch_size, embed_size)
+            query = torch.unsqueeze(state[-1], dim=1)  # (batch_size, 1（query个数）, num_hiddens)
+            # context shape: (batch_size, 1, num_hiddens)
+            context = self.attention(query, enc_outputs, enc_outputs, enc_valid_lens)
+            # 此处拼接的不再是context是经注意力机制输出的状态，而不是Encoder的最终隐状态
+            x = torch.cat((torch.unsqueeze(x, dim=1), context), dim=-1)
+            output, state = self.rnn(x.permute(1, 0, 2), state)
+            outputs.append(output)
+        outputs = self.dense(torch.cat(outputs, dim=0))
+        return outputs.permute(1, 0, 2), enc_outputs, state, enc_valid_lens

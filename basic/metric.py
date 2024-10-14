@@ -1,7 +1,7 @@
 import math, collections
 
 
-def bleu(pred_seq, label_seq, k):  # @save
+def bleu(pred_seq, label_seq, k):
     """计算BLEU"""
     pred_tokens, label_tokens = pred_seq.split(' '), label_seq.split(' ')
     len_pred, len_label = len(pred_tokens), len(label_tokens)

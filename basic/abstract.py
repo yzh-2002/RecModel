@@ -20,7 +20,8 @@ class Decoder(nn.Module):
     def init_state(self, enc_outputs, *args):
         raise NotImplementedError
 
-    def forward(self, X, enc_state,state):
+    # def forward(self, X, enc_state, state):
+    def forward(self, X, enc_outputs, enc_valid_lens, state):  # attention机制所需
         raise NotImplementedError
 
 
@@ -35,4 +36,4 @@ class EncoderDecoder(nn.Module):
     def forward(self, enc_X, dec_X, *args):
         enc_outputs = self.encoder(enc_X, *args)
         dec_state = self.decoder.init_state(enc_outputs, *args)
-        return self.decoder(dec_X, dec_state)
+        return self.decoder(dec_X, *dec_state)

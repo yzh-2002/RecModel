@@ -1,10 +1,7 @@
 import torch, math
 
 from dataset import load_data_time_machine
-from basic.model.rnn import RNN
-from basic.model.gru import GRU
-from basic.model.deeprnn import DeepRNN
-from basic.model.bidirectionalrnn import BidirectionalRNN
+from basic.model.rnns.bidirectionalrnn import BidirectionalRNN
 
 
 def predict_fn(prefix, num_preds, model, vocab, device):

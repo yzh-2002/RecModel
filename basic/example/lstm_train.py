@@ -1,7 +1,7 @@
 import torch, math
 
 from dataset import load_data_time_machine
-from basic.model.lstm import LSTM
+from basic.model.rnns.lstm import LSTM
 
 
 def predict_fn(prefix, num_preds, model, vocab, device):
