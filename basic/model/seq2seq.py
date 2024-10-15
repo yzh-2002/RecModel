@@ -1,6 +1,6 @@
 import torch
 from ..abstract import Encoder, Decoder
-from basic.model.attention.attention import AdditiveAttention
+from basic.model.transformer.attention import AdditiveAttention
 
 
 class Seq2seqEncoder(Encoder):

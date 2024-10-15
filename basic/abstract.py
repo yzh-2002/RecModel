@@ -21,7 +21,8 @@ class Decoder(nn.Module):
         raise NotImplementedError
 
     # def forward(self, X, enc_state, state):
-    def forward(self, X, enc_outputs, enc_valid_lens, state):  # attention机制所需
+    # def forward(self, X, enc_outputs, enc_valid_lens, state):  # 添加attention机制的seq2seq
+    def forward(self, X, state):
         raise NotImplementedError
 
 
@@ -36,4 +37,5 @@ class EncoderDecoder(nn.Module):
     def forward(self, enc_X, dec_X, *args):
         enc_outputs = self.encoder(enc_X, *args)
         dec_state = self.decoder.init_state(enc_outputs, *args)
-        return self.decoder(dec_X, *dec_state)
+        # return self.decoder(dec_X, *dec_state)
+        return self.decoder(dec_X, dec_state)
